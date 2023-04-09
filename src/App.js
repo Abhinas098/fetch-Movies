@@ -1,24 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 import MoviesList from "./components/MoviesList";
 import "./App.css";
 
-let retry = null;
-var intervals = [];
 function App() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [cancel, setCancel] = useState(true);
 
-  const FetchMovieHandler = async () => {
-    setError(null);
+  const FetchMovieHandler = useCallback(async () => {
     setLoading(true);
-    setMovies([]);
+    setError(null);
     try {
-      const response = await fetch("https://swapi.dev/api/film/");
+      const response = await fetch("https://swapi.dev/api/films/");
       if (!response.ok) {
-        throw new Error("Something went wrong ....Retrying");
+        throw new Error("Something Went Wrong!");
       }
       const data = await response.json();
 
@@ -33,28 +29,15 @@ function App() {
       setMovies(transformedMovies);
     } catch (error) {
       setError(error.message);
-
-      if (cancel) {
-        retry = setInterval(FetchMovieHandler, 5000);
-        intervals.push(retry);
-      }
     }
     setLoading(false);
-  };
+  }, []);
 
-  function retryCancel() {
-    setCancel(false);
-
-    intervals.map((interval) => {
-      console.log(interval);
-      return clearInterval(interval);
-    });
-    setError(null);
-    setCancel(true);
-    return clearInterval(retry);
-  }
-
-  let content = "no data found";
+  useEffect(() => {
+    FetchMovieHandler();
+  }, [FetchMovieHandler]);
+  
+  let content = "No movies found";
   if (loading) {
     content = <h3>Loading...</h3>;
   }
@@ -64,7 +47,7 @@ function App() {
   if (error) {
     content = (
       <div>
-        <p>{error}</p> <button onClick={retryCancel}>Cancel</button>
+        <p>{error}</p>
       </div>
     );
   }
